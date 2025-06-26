@@ -142,6 +142,7 @@ class MenuManager:
         return items[self.window_start_index:self.window_start_index + window_size]
 
     def scroll_selection(self, direction):
+        print(f"SCROLL: called with direction {direction} | is_active={self.is_active}")
         if not self.is_active:
             return
         previous_index = self.current_selection_index

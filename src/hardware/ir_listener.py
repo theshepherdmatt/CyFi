@@ -76,6 +76,8 @@ def process_key(key, current_mode):
     elif key == "KEY_UP":
         if current_mode in ["original", "modern", "minimal", "webradio"]:
             send_command("seek_plus")
+        elif current_mode in ["menu", "configmenu"]:
+            send_command("scroll_left")  # Up = left in main menu
         elif current_mode in ["tidal", "qobuz", "spotify", "library", "playlists", "radiomanager", 
                             "displaymenu", "clockmenu", "remotemenu", "screensavermenu", "systeminfo", "systemupdate", "radioparadise", "motherearthradio"]:
             send_command("scroll_up")
@@ -85,11 +87,14 @@ def process_key(key, current_mode):
     elif key == "KEY_DOWN":
         if current_mode in ["original", "modern", "minimal", "webradio"]:
             send_command("seek_minus")
+        elif current_mode in ["menu", "configmenu"]:
+            send_command("scroll_right")  # Down = right in main menu
         elif current_mode in ["tidal", "qobuz", "spotify", "library", "playlists", "radiomanager", 
                             "displaymenu", "clockmenu", "remotemenu", "screensavermenu", "systeminfo", "systemupdate", "radioparadise", "motherearthradio"]:
             send_command("scroll_down")
         else:
             print("No mapping for KEY_DOWN in current mode.")
+
 
     
     elif key == "KEY_BACK":

@@ -200,30 +200,35 @@ def cyfi_command_server(mode_manager, volumio_listener, display_manager, ready_s
 
                 # **Replace the scroll command handlers with this debug and forced scroll:**
 
+                elif command == "scroll_left":
+                    print(f"Scroll left command received in mode: {current_mode}")  # DEBUG
+                    mode_manager.menu_manager.scroll_selection(-1)
+                    print("Called menu_manager.scroll_selection(-1) [LEFT]")
+
+                elif command == "scroll_right":
+                    print(f"Scroll right command received in mode: {current_mode}")  # DEBUG
+                    mode_manager.menu_manager.scroll_selection(1)
+                    print("Called menu_manager.scroll_selection(1) [RIGHT]")
+                    
+                    
                 elif command == "scroll_up":
                     print(f"Scroll up command received in mode: {current_mode}")  # DEBUG
-                    # Force scroll on menu_manager for testing regardless of mode:
-                    mode_manager.menu_manager.scroll_selection(-1)
-                    print("Called menu_manager.scroll_selection(-1)")
+                    # General-purpose scroll (menu or submenus)
+                    if current_mode in scroll_mapping["scroll_up"]:
+                        scroll_mapping["scroll_up"][current_mode]()
+                        print(f"Called scroll_selection(-1) for {current_mode}")
+                    else:
+                        print("No scroll_up mapping for this mode.")
 
                 elif command == "scroll_down":
                     print(f"Scroll down command received in mode: {current_mode}")  # DEBUG
-                    # Force scroll on menu_manager for testing regardless of mode:
-                    mode_manager.menu_manager.scroll_selection(1)
-                    print("Called menu_manager.scroll_selection(1)")
+                    if current_mode in scroll_mapping["scroll_down"]:
+                        scroll_mapping["scroll_down"][current_mode]()
+                        print(f"Called scroll_selection(1) for {current_mode}")
+                    else:
+                        print("No scroll_down mapping for this mode.")
 
-                elif command == "seek_plus":
-                    print("Seeking forward 10 seconds.")
-                    subprocess.run(["volumio", "seek", "plus"], check=False)
-                elif command == "seek_minus":
-                    print("Seeking backward 10 seconds.")
-                    subprocess.run(["volumio", "seek", "minus"], check=False)
-                elif command == "skip_next":
-                    print("Skipping to next track.")
-                    subprocess.run(["volumio", "next"], check=False)
-                elif command == "skip_previous":
-                    print("Skipping to previous track.")
-                    subprocess.run(["volumio", "previous"], check=False)
+
                 elif command == "volume_plus":
                     volumio_listener.increase_volume()
                 elif command == "volume_minus":
