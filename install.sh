@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e  # Exit immediately if a command exits with a non-zero status
-#set -x  # Uncomment to enable debugging
 
 # ============================
 #   Colour Code Definitions
@@ -15,11 +14,10 @@ NC='\033[0m' # No Color
 # ============================
 #   Variables for Progress Tracking
 # ============================
-TOTAL_STEPS=20
+TOTAL_STEPS=15
 CURRENT_STEP=0
 LOG_FILE="install.log"
 
-# Remove existing log file at start
 rm -f "$LOG_FILE"
 
 # ============================
@@ -28,7 +26,7 @@ rm -f "$LOG_FILE"
 banner() {
     echo -e "${MAGENTA}"
     echo "======================================================================================================"
-    echo "   CyFi Installer: Bringing you a Volumio-based audio experience with custom UI, buttons, and LEDs"
+    echo "   CyFi Installer: Volumio-based audio experience with IR remote support (Cyrus build)"
     echo "======================================================================================================"
     echo -e "${NC}"
 }
@@ -67,16 +65,12 @@ check_root() {
 #   CyFi-Specific Tips
 # ============================
 TIPS=(
-  "Long-press any button to return home to the clock mode."
-  "Under 'Config', you can switch display modes—Modern, Original, or Minimal-Screen."
-  "Don’t forget to explore different screensaver types under 'Screensaver' in Config!"
-  "Brightness can be tweaked in Config -> Display for late-night listening."
-  "CyFi: Where code meets Hi-Fi. Check new clock faces in 'Clock' menu!"
-  "Need track info? Modern screen overlays sample rate & bit depth at the bottom."
+  "Under 'Config', you can switch display modes."
+  "Explore different screensaver types in Config!"
+  "Brightness can be tweaked for late-night listening."
+  "CyFi: Where code meets Hi-Fi."
   "Help & logs: see install.log or run 'journalctl -u cyfi.service'."
-  "Idle logic is improved—no more burnt-in OLED pixels!"
 )
-
 show_random_tip() {
     local index=$((RANDOM % ${#TIPS[@]}))
     log_message "info" "Tip: ${TIPS[$index]}"
@@ -99,41 +93,37 @@ run_command() {
 }
 
 # ============================
-#   New: Gather All User Preferences Up-Front
+#   Gather User Preferences (IR only)
 # ============================
 get_user_preferences() {
-    # 1) Ask about Buttons & LEDs
-    BUTTONSLEDS_ENABLED=false
-    while true; do
-        read -rp "Enable Buttons & LEDs with MCP23017? (y/n): " answer
-        case $answer in
-            [Yy]* ) BUTTONSLEDS_ENABLED=true; break ;;
-            [Nn]* ) BUTTONSLEDS_ENABLED=false; break ;;
-            * ) log_message "warning" "Please answer y or n." ;;
-        esac
-    done
+    enable_gpio_ir
+    gather_ir_remote_configuration
+}
 
-    # 2) Ask about IR remote support
-    echo -e "\nWill you be using an IR remote? (y/n)"
-    read -rp "Your choice: " ir_choice
-    if [[ "$ir_choice" =~ ^[Yy] ]]; then
-        IR_REMOTE_SUPPORT=true
-        # Ask for GPIO selection immediately (this calls the existing function)
-        enable_gpio_ir
-        # Then gather the IR remote configuration selection
-        gather_ir_remote_configuration
+# ============================
+#   Always Set GPIO IR to 27
+# ============================
+enable_gpio_ir() {
+    log_progress "Configuring GPIO IR overlay for GPIO 27 in userconfig.txt..."
+    CONFIG_FILE="/boot/userconfig.txt"
+    if [ ! -f "$CONFIG_FILE" ]; then
+        run_command "touch \"$CONFIG_FILE\""
+    fi
+    if grep -q "^dtoverlay=gpio-ir" "$CONFIG_FILE"; then
+        log_message "info" "GPIO IR overlay already present. Updating to use GPIO 27."
+        run_command "sed -i 's/^dtoverlay=gpio-ir.*$/dtoverlay=gpio-ir,gpio_pin=27/' \"$CONFIG_FILE\""
     else
-        IR_REMOTE_SUPPORT=false
-        log_message "info" "IR remote support skipped."
+        echo "dtoverlay=gpio-ir,gpio_pin=27" >> "$CONFIG_FILE"
+        log_message "success" "GPIO IR overlay added with GPIO 27."
     fi
 }
 
 # ============================
-#   New: Gather IR Remote Configuration Selection (Interactive)
+#   Full 20 Remote Option List
 # ============================
 gather_ir_remote_configuration() {
     echo -e "\n${MAGENTA}Select your IR remote configuration:${NC}"
-    echo "1) Default CyFi Remote"
+    echo "1) Default Cyrus Remote"
     echo "2) Apple Remote A1156"
     echo "3) Apple Remote A1156 Alternative"
     echo "4) Apple Remote A1294"
@@ -156,7 +146,7 @@ gather_ir_remote_configuration() {
     
     read -p "Enter your choice (1-20): " choice
     case "$choice" in
-        1) remote_folder="Default CyFi Remote" ;;
+        1) remote_folder="Default Cyrus Remote" ;;
         2) remote_folder="Apple Remote A1156" ;;
         3) remote_folder="Apple Remote A1156 Alternative" ;;
         4) remote_folder="Apple Remote A1294" ;;
@@ -183,13 +173,13 @@ gather_ir_remote_configuration() {
 }
 
 # ============================
-#   IR Remote Configuration Application (Later in the script)
+#   IR Remote Configuration Application
 # ============================
 apply_ir_remote_configuration() {
     log_progress "Applying IR remote configuration for: $remote_folder"
-    # If the default is selected, use the files directly from the lirc folder.
-    if [ "$remote_folder" = "Default CyFi Remote" ]; then
-        SOURCE_DIR="/home/volumio/CyFi/lirc/"
+    if [ "$remote_folder" = "Default Cyrus Remote" ]; then
+        log_message "info" "Default Cyrus Remote selected – configuration already present, no changes made."
+        return
     else
         SOURCE_DIR="/home/volumio/CyFi/lirc/configurations/${remote_folder}/"
         if [ ! -d "$SOURCE_DIR" ]; then
@@ -199,36 +189,37 @@ apply_ir_remote_configuration() {
     fi
     DEST_DIR="/etc/lirc/"
 
-    # Copy lircd.conf
-    if [ -f "${SOURCE_DIR}lircd.conf" ]; then
-        run_command "cp \"${SOURCE_DIR}lircd.conf\" \"${DEST_DIR}lircd.conf\""
-        log_message "success" "Copied lircd.conf from $remote_folder."
-    else
-        log_message "error" "File '${SOURCE_DIR}lircd.conf' not found."
-        exit 1
-    fi
+    # Only copy files for custom (non-default) remotes
+    if [ "$remote_folder" != "Default Cyrus Remote" ]; then
+        if [ -f "${SOURCE_DIR}lircd.conf" ]; then
+            run_command "cp \"${SOURCE_DIR}lircd.conf\" \"${DEST_DIR}lircd.conf\""
+            log_message "success" "Copied lircd.conf from $remote_folder."
+        else
+            log_message "error" "File '${SOURCE_DIR}lircd.conf' not found."
+            exit 1
+        fi
 
-    # Copy lircrc
-    if [ -f "${SOURCE_DIR}lircrc" ]; then
-        run_command "cp \"${SOURCE_DIR}lircrc\" \"${DEST_DIR}lircrc\""
-        log_message "success" "Copied lircrc from $remote_folder."
-    else
-        log_message "error" "File '${SOURCE_DIR}lircrc' not found."
-        exit 1
-    fi
+        if [ -f "${SOURCE_DIR}lircrc" ]; then
+            run_command "cp \"${SOURCE_DIR}lircrc\" \"${DEST_DIR}lircrc\""
+            log_message "success" "Copied lircrc from $remote_folder."
+        else
+            log_message "error" "File '${SOURCE_DIR}lircrc' not found."
+            exit 1
+        fi
 
-    # Restart LIRC and IR listener services
-    run_command "systemctl restart lircd"
-    run_command "systemctl restart ir_listener.service"
-    log_message "success" "IR services restarted."
-    echo -e "\nIR remote configuration applied. Please reboot later for changes to take effect."
+        run_command "systemctl restart lircd"
+        run_command "systemctl restart ir_listener.service"
+        log_message "success" "IR services restarted."
+        echo -e "\nIR remote configuration applied. Please reboot later for changes to take effect."
+    fi
 }
+
 
 # ============================
 #   System Dependencies
 # ============================
 install_system_dependencies() {
-    log_progress "Installing system-level dependencies, this might take a while so put the kettle on..."
+    log_progress "Installing system-level dependencies, this might take a while..."
     run_command "apt-get update"
     run_command "apt-get install -y \
             python3.7 \
@@ -249,7 +240,7 @@ install_system_dependencies() {
             libssl-dev \
             lirc \
             lsof"
-    log_message "success" "System-level dependencies installed. (ᵔᴥᵔ)"
+    log_message "success" "System-level dependencies installed."
     show_random_tip
 }
 
@@ -262,11 +253,9 @@ upgrade_pip() {
 
 install_python_dependencies() {
     log_progress "Installing Python dependencies, please wait..."
-    # Force-install pycairo first
     run_command "python3.7 -m pip install --upgrade --ignore-installed pycairo"
-    # Then the rest from requirements.txt
     run_command "python3.7 -m pip install --upgrade --ignore-installed -r /home/volumio/CyFi/requirements.txt"
-    log_message "success" "Python dependencies installed. (•‿•)"
+    log_message "success" "Python dependencies installed."
     show_random_tip
 }
 
@@ -307,82 +296,6 @@ enable_i2c_spi() {
         fi
     fi
     show_random_tip
-}
-
-# ============================
-#   GPIO IR Overlay with User Selection
-# ============================
-enable_gpio_ir() {
-    log_progress "Configuring GPIO IR overlay in userconfig.txt..."
-    CONFIG_FILE="/boot/userconfig.txt"
-    if [ ! -f "$CONFIG_FILE" ]; then
-        run_command "touch \"$CONFIG_FILE\""
-    fi
-
-    # Prompt the user for the GPIO pin selection
-    echo -e "\nSelect the GPIO pin for the IR receiver:"
-    echo "1) GPIO 19"
-    echo "2) GPIO 20"
-    echo "3) GPIO 21"
-    echo "4) GPIO 23"
-    echo "5) GPIO 26 (Default)"
-    echo "6) GPIO 27"
-    read -p "Enter your choice (1-6) [Default 5]: " gpio_choice
-
-    case "$gpio_choice" in
-        1) selected_gpio=19 ;;
-        2) selected_gpio=20 ;;
-        3) selected_gpio=21 ;;
-        4) selected_gpio=23 ;;
-        5|"") selected_gpio=26 ;;  # default if 5 is chosen or nothing entered
-        6) selected_gpio=27 ;;
-        *) echo "Invalid selection. Using default GPIO 26." 
-           selected_gpio=26 ;;
-    esac
-
-    if grep -q "^dtoverlay=gpio-ir" "$CONFIG_FILE"; then
-        log_message "info" "GPIO IR overlay already present in $CONFIG_FILE. Updating to use GPIO $selected_gpio."
-        run_command "sed -i 's/^dtoverlay=gpio-ir.*$/dtoverlay=gpio-ir,gpio_pin=${selected_gpio}/' \"$CONFIG_FILE\""
-        log_message "success" "GPIO IR overlay updated to use GPIO $selected_gpio in $CONFIG_FILE."
-    else
-        echo "dtoverlay=gpio-ir,gpio_pin=${selected_gpio}" >> "$CONFIG_FILE"
-        log_message "success" "GPIO IR overlay added to $CONFIG_FILE with GPIO $selected_gpio."
-    fi
-}
-
-# ============================
-#   Detect/Set MCP23017 Address
-# ============================
-detect_i2c_address() {
-    log_progress "Detecting MCP23017 I2C address..."
-    i2c_output=$(/usr/sbin/i2cdetect -y 1)
-    echo "$i2c_output" >> "$LOG_FILE"
-    echo "$i2c_output"
-    address=$(echo "$i2c_output" | grep -oE '\b(20|21|22|23|24|25|26|27)\b' | head -n 1)
-    if [[ -z "$address" ]]; then
-        log_message "warning" "No MCP23017 detected. Check wiring."
-    else
-        log_message "success" "MCP23017 found at I2C: 0x$address."
-        update_config_i2c_address "$address"
-    fi
-    show_random_tip
-}
-
-update_config_i2c_address() {
-    local detected_address="$1"
-    CONFIG_FILE="/home/volumio/CyFi/config.yaml"
-    if [[ -f "$CONFIG_FILE" ]]; then
-        if grep -q "mcp23017_address:" "$CONFIG_FILE"; then
-            run_command "sed -i \"s/mcp23017_address: 0x[0-9a-fA-F]\\{2\\}/mcp23017_address: 0x$detected_address/\" \"$CONFIG_FILE\""
-            log_message "success" "Updated MCP23017 address in config.yaml to 0x$detected_address."
-        else
-            echo "mcp23017_address: 0x$detected_address" >> "$CONFIG_FILE"
-            log_message "success" "Added MCP23017 address to config.yaml as 0x$detected_address."
-        fi
-    else
-        log_message "error" "config.yaml not found at $CONFIG_FILE."
-        exit 1
-    fi
 }
 
 # ============================
@@ -432,7 +345,7 @@ setup_main_service() {
         run_command "systemctl daemon-reload"
         run_command "systemctl enable cyfi.service"
         run_command "systemctl start cyfi.service"
-        log_message "success" "cyfi.service installed and started. (ノ^_^)ノ"
+        log_message "success" "cyfi.service installed and started."
     else
         log_message "error" "cyfi.service not found in /home/volumio/CyFi/service."
         exit 1
@@ -441,38 +354,12 @@ setup_main_service() {
 }
 
 # ============================
-#   LED On Early Service
-# ============================
-
-setup_early_led8_service() {
-    log_progress "Setting up early LED 8 indicator service..."
-    SERVICE_SRC="/home/volumio/CyFi/service/early_led8.service"
-    SERVICE_DST="/etc/systemd/system/early_led8.service"
-    SCRIPT_SRC="/home/volumio/CyFi/scripts/early_led8.py"
-    SCRIPT_DST="/home/volumio/CyFi/scripts/early_led8.py"
-
-    if [[ -f "$SERVICE_SRC" && -f "$SCRIPT_SRC" ]]; then
-        run_command "cp \"$SERVICE_SRC\" \"$SERVICE_DST\""
-        run_command "chmod +x \"$SCRIPT_DST\""
-        run_command "systemctl daemon-reload"
-        run_command "systemctl enable early_led8.service"
-        run_command "systemctl start early_led8.service"
-        log_message "success" "early_led8.service installed and started."
-    else
-        log_message "error" "Missing $SERVICE_SRC or $SCRIPT_SRC."
-        exit 1
-    fi
-}
-
-
-# ============================
 #   MPD Configuration
 # ============================
 configure_mpd() {
     log_progress "Configuring MPD for FIFO..."
     MPD_CONF_FILE="/volumio/app/plugins/music_service/mpd/mpd.conf.tmpl"
     FIFO_OUTPUT="
-
 audio_output {
     type            \"fifo\"
     name            \"my_fifo\"
@@ -543,43 +430,11 @@ setup_cava_service() {
         run_command "cp \"$LOCAL_CAVA_SERVICE\" \"$CAVA_SERVICE_FILE\""
         run_command "systemctl daemon-reload"
         run_command "systemctl enable cava.service"
-        # Optionally start the service here:
-        # run_command "systemctl start cava.service"
         log_message "success" "CAVA service installed."
     else
         log_message "error" "cava.service not found in /home/volumio/CyFi/service."
     fi
     show_random_tip
-}
-
-# ============================
-#   Buttons + LEDs Handling
-# ============================
-configure_buttons_leds() {
-    MAIN_PY_PATH="/home/volumio/CyFi/src/main.py"
-    if [[ ! -f "$MAIN_PY_PATH" ]]; then
-        log_message "error" "Could not find main.py at $MAIN_PY_PATH."
-        exit 1
-    fi
-    if [ "$BUTTONSLEDS_ENABLED" = false ]; then
-        log_message "info" "Disabling 'buttons_leds' usage in main.py..."
-        if grep -qE "^[^#]*\s*buttons_leds\s*=\s*ButtonsLEDController" "$MAIN_PY_PATH"; then
-            sed -i.bak '/buttons_leds\s*=\s*ButtonsLEDController/ s/^\(\s*\)/\1#/' "$MAIN_PY_PATH"
-        fi
-        if grep -qE "^[^#]*\s*buttons_leds.start()" "$MAIN_PY_PATH"; then
-            sed -i.bak '/buttons_leds.start()/ s/^\(\s*\)/\1#/' "$MAIN_PY_PATH"
-        fi
-        log_message "success" "Buttons/LEDs lines commented out."
-    else
-        log_message "info" "Enabling 'buttons_leds' usage in main.py..."
-        if grep -qE "^[#]*\s*buttons_leds\s*=\s*ButtonsLEDController" "$MAIN_PY_PATH"; then
-            sed -i.bak '/buttons_leds\s*=\s*ButtonsLEDController/ s/^#//' "$MAIN_PY_PATH"
-        fi
-        if grep -qE "^[#]*\s*buttons_leds.start()" "$MAIN_PY_PATH"; then
-            sed -i.bak '/buttons_leds.start()/ s/^#//' "$MAIN_PY_PATH"
-        fi
-        log_message "success" "Buttons/LEDs lines uncommented."
-    fi
 }
 
 # ============================
@@ -679,73 +534,33 @@ main() {
     banner
     log_message "info" "Starting CyFi Installer..."
     
-    # NEW: Gather all interactive answers at the very top
+    # Gather all interactive answers at the very top
     get_user_preferences
 
-    # 3) Install system dependencies
     install_system_dependencies
-
-    # 4) Enable I2C/SPI
     enable_i2c_spi
-
-    # 5) Upgrade pip
     upgrade_pip
-
-    # 6) Install Python dependencies
     install_python_dependencies
-
-    # 7) Detect I2C address if Buttons/LEDs enabled
-    if [ "$BUTTONSLEDS_ENABLED" = true ]; then
-        detect_i2c_address
-        setup_early_led8_service
-    else
-        log_message "info" "Skipping I2C detect, as user chose not to enable Buttons/LEDs."
-    fi
-
-    # 8) Setup main CyFi service
     setup_main_service
-
-    # 9) Configure MPD
     configure_mpd
-
-    # 10) Install CAVA from fork
     install_cava_from_fork
-
-    # 11) Setup CAVA service
     setup_cava_service
-
-    # 12) Configure Buttons & LEDs (modify main.py)
-    configure_buttons_leds
-
-    # 13) Setup Samba
     setup_samba
-
-    # 14) Install LIRC configuration (lircrc) from repository folder
     install_lircrc
-
-    # 15) Install LIRC configuration files (lircrc and lircd.conf)
     install_lirc_configs
-
-    # 16) Setup IR Listener service
     setup_ir_listener_service
-
-    # 17) Update LIRC options to set driver to default
     update_lirc_options
 
-    # NEW: If IR remote support was chosen, apply the configuration now.
-    if [ "$IR_REMOTE_SUPPORT" = true ] && [ "$REMOTE_CONFIG_CHOICE" = true ]; then
+    # Apply IR remote configuration
+    if [ "$REMOTE_CONFIG_CHOICE" = true ]; then
         apply_ir_remote_configuration
     fi
 
-    # 18) Set Permissions
     set_permissions
-
-    # 19) Set up run_update setuid wrapper for automated updates
     setup_run_update_wrapper
 
     log_message "success" "CyFi installation complete! A reboot is required."
 
-    # 20) Ask user if they'd like to reboot now
     while true; do
         read -rp "Reboot now? (y/n) " answer
         case $answer in
@@ -764,4 +579,3 @@ main() {
 }
 
 main
-
