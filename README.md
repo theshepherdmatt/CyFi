@@ -40,21 +40,15 @@ Quick Start
 Clone the Beta repo:
 
 ```bash
-git clone https://github.com/theshepherdmatt/CyFi-Beta.git
+git clone https://github.com/theshepherdmatt/CyFi.git
 ```
-* then
-```
-mv CyFi-Beta CyFi 
-```
-(this changes the folder/paths to the original CyFi)
-
 * and
 ```
 cd CyFi
 sudo bash install.sh
 ```
 
-(If you prefer HTTPS, use https://github.com/theshepherdmatt/CyFi-Beta.git)
+(If you prefer HTTPS, use https://github.com/theshepherdmatt/CyFi.git)
 
 A reboot may be required after install; you’ll be prompted if so.
 
