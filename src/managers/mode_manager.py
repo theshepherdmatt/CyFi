@@ -8,7 +8,7 @@ from transitions import Machine
 
 class ModeManager:
     """
-    A unified ModeManager for Quadify that includes:
+    A unified ModeManager for CyFi that includes:
       - Display-mode persistence (original/modern)
       - Screensaver & idle logic
       - Additional states for Tidal/Qobuz/Radio/Playlists
@@ -866,7 +866,7 @@ class ModeManager:
 
     def update_current_mode(self):
         try:
-            with open("/tmp/quadify_mode", "w") as f:
+            with open("/tmp/cyfi_mode", "w") as f:
                 f.write(self.get_mode())
         except Exception as e:
             self.logger.error(f"Failed to update mode file: {e}")

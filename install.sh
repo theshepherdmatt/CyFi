@@ -28,7 +28,7 @@ rm -f "$LOG_FILE"
 banner() {
     echo -e "${MAGENTA}"
     echo "======================================================================================================"
-    echo "   Quadify Installer: Bringing you a Volumio-based audio experience with custom UI, buttons, and LEDs"
+    echo "   CyFi Installer: Bringing you a Volumio-based audio experience with custom UI, buttons, and LEDs"
     echo "======================================================================================================"
     echo -e "${NC}"
 }
@@ -64,16 +64,16 @@ check_root() {
 }
 
 # ============================
-#   Quadify-Specific Tips
+#   CyFi-Specific Tips
 # ============================
 TIPS=(
   "Long-press any button to return home to the clock mode."
   "Under 'Config', you can switch display modes—Modern, Original, or Minimal-Screen."
   "Don’t forget to explore different screensaver types under 'Screensaver' in Config!"
   "Brightness can be tweaked in Config -> Display for late-night listening."
-  "Quadify: Where code meets Hi-Fi. Check new clock faces in 'Clock' menu!"
+  "CyFi: Where code meets Hi-Fi. Check new clock faces in 'Clock' menu!"
   "Need track info? Modern screen overlays sample rate & bit depth at the bottom."
-  "Help & logs: see install.log or run 'journalctl -u quadify.service'."
+  "Help & logs: see install.log or run 'journalctl -u cyfi.service'."
   "Idle logic is improved—no more burnt-in OLED pixels!"
 )
 
@@ -133,7 +133,7 @@ get_user_preferences() {
 # ============================
 gather_ir_remote_configuration() {
     echo -e "\n${MAGENTA}Select your IR remote configuration:${NC}"
-    echo "1) Default Quadify Remote"
+    echo "1) Default CyFi Remote"
     echo "2) Apple Remote A1156"
     echo "3) Apple Remote A1156 Alternative"
     echo "4) Apple Remote A1294"
@@ -156,7 +156,7 @@ gather_ir_remote_configuration() {
     
     read -p "Enter your choice (1-20): " choice
     case "$choice" in
-        1) remote_folder="Default Quadify Remote" ;;
+        1) remote_folder="Default CyFi Remote" ;;
         2) remote_folder="Apple Remote A1156" ;;
         3) remote_folder="Apple Remote A1156 Alternative" ;;
         4) remote_folder="Apple Remote A1294" ;;
@@ -188,10 +188,10 @@ gather_ir_remote_configuration() {
 apply_ir_remote_configuration() {
     log_progress "Applying IR remote configuration for: $remote_folder"
     # If the default is selected, use the files directly from the lirc folder.
-    if [ "$remote_folder" = "Default Quadify Remote" ]; then
-        SOURCE_DIR="/home/volumio/Quadify/lirc/"
+    if [ "$remote_folder" = "Default CyFi Remote" ]; then
+        SOURCE_DIR="/home/volumio/CyFi/lirc/"
     else
-        SOURCE_DIR="/home/volumio/Quadify/lirc/configurations/${remote_folder}/"
+        SOURCE_DIR="/home/volumio/CyFi/lirc/configurations/${remote_folder}/"
         if [ ! -d "$SOURCE_DIR" ]; then
             log_message "error" "Directory '$SOURCE_DIR' does not exist."
             exit 1
@@ -265,7 +265,7 @@ install_python_dependencies() {
     # Force-install pycairo first
     run_command "python3.7 -m pip install --upgrade --ignore-installed pycairo"
     # Then the rest from requirements.txt
-    run_command "python3.7 -m pip install --upgrade --ignore-installed -r /home/volumio/Quadify/requirements.txt"
+    run_command "python3.7 -m pip install --upgrade --ignore-installed -r /home/volumio/CyFi/requirements.txt"
     log_message "success" "Python dependencies installed. (•‿•)"
     show_random_tip
 }
@@ -370,7 +370,7 @@ detect_i2c_address() {
 
 update_config_i2c_address() {
     local detected_address="$1"
-    CONFIG_FILE="/home/volumio/Quadify/config.yaml"
+    CONFIG_FILE="/home/volumio/CyFi/config.yaml"
     if [[ -f "$CONFIG_FILE" ]]; then
         if grep -q "mcp23017_address:" "$CONFIG_FILE"; then
             run_command "sed -i \"s/mcp23017_address: 0x[0-9a-fA-F]\\{2\\}/mcp23017_address: 0x$detected_address/\" \"$CONFIG_FILE\""
@@ -389,17 +389,17 @@ update_config_i2c_address() {
 #   Samba Setup
 # ============================
 setup_samba() {
-    log_progress "Configuring Samba for Quadify..."
+    log_progress "Configuring Samba for CyFi..."
     SMB_CONF="/etc/samba/smb.conf"
     if [ ! -f "$SMB_CONF.bak" ]; then
         run_command "cp $SMB_CONF $SMB_CONF.bak"
         log_message "info" "Backup of $SMB_CONF created."
     fi
-    if ! grep -q "\[Quadify\]" "$SMB_CONF"; then
+    if ! grep -q "\[CyFi\]" "$SMB_CONF"; then
         cat <<EOF >> "$SMB_CONF"
 
-[Quadify]
-   path = /home/volumio/Quadify
+[CyFi]
+   path = /home/volumio/CyFi
    writable = yes
    browseable = yes
    guest ok = yes
@@ -408,33 +408,33 @@ setup_samba() {
    directory mask = 0777
    public = yes
 EOF
-        log_message "success" "Samba config for Quadify appended."
+        log_message "success" "Samba config for CyFi appended."
     else
-        log_message "info" "Quadify section already in smb.conf."
+        log_message "info" "CyFi section already in smb.conf."
     fi
     run_command "systemctl restart smbd"
     log_message "success" "Samba restarted."
-    run_command "chown -R volumio:volumio /home/volumio/Quadify"
-    run_command "chmod -R 777 /home/volumio/Quadify"
-    log_message "success" "Permissions set for /home/volumio/Quadify."
+    run_command "chown -R volumio:volumio /home/volumio/CyFi"
+    run_command "chmod -R 777 /home/volumio/CyFi"
+    log_message "success" "Permissions set for /home/volumio/CyFi."
     show_random_tip
 }
 
 # ============================
-#   Main Quadify Service
+#   Main CyFi Service
 # ============================
 setup_main_service() {
-    log_progress "Setting up Main Quadify Service..."
-    SERVICE_FILE="/etc/systemd/system/quadify.service"
-    LOCAL_SERVICE="/home/volumio/Quadify/service/quadify.service"
+    log_progress "Setting up Main CyFi Service..."
+    SERVICE_FILE="/etc/systemd/system/cyfi.service"
+    LOCAL_SERVICE="/home/volumio/CyFi/service/cyfi.service"
     if [[ -f "$LOCAL_SERVICE" ]]; then
         run_command "cp \"$LOCAL_SERVICE\" \"$SERVICE_FILE\""
         run_command "systemctl daemon-reload"
-        run_command "systemctl enable quadify.service"
-        run_command "systemctl start quadify.service"
-        log_message "success" "quadify.service installed and started. (ノ^_^)ノ"
+        run_command "systemctl enable cyfi.service"
+        run_command "systemctl start cyfi.service"
+        log_message "success" "cyfi.service installed and started. (ノ^_^)ノ"
     else
-        log_message "error" "quadify.service not found in /home/volumio/Quadify/service."
+        log_message "error" "cyfi.service not found in /home/volumio/CyFi/service."
         exit 1
     fi
     show_random_tip
@@ -446,10 +446,10 @@ setup_main_service() {
 
 setup_early_led8_service() {
     log_progress "Setting up early LED 8 indicator service..."
-    SERVICE_SRC="/home/volumio/Quadify/service/early_led8.service"
+    SERVICE_SRC="/home/volumio/CyFi/service/early_led8.service"
     SERVICE_DST="/etc/systemd/system/early_led8.service"
-    SCRIPT_SRC="/home/volumio/Quadify/scripts/early_led8.py"
-    SCRIPT_DST="/home/volumio/Quadify/scripts/early_led8.py"
+    SCRIPT_SRC="/home/volumio/CyFi/scripts/early_led8.py"
+    SCRIPT_DST="/home/volumio/CyFi/scripts/early_led8.py"
 
     if [[ -f "$SERVICE_SRC" && -f "$SCRIPT_SRC" ]]; then
         run_command "cp \"$SERVICE_SRC\" \"$SERVICE_DST\""
@@ -538,7 +538,7 @@ install_cava_from_fork() {
 setup_cava_service() {
     log_progress "Setting up CAVA service..."
     CAVA_SERVICE_FILE="/etc/systemd/system/cava.service"
-    LOCAL_CAVA_SERVICE="/home/volumio/Quadify/service/cava.service"
+    LOCAL_CAVA_SERVICE="/home/volumio/CyFi/service/cava.service"
     if [[ -f "$LOCAL_CAVA_SERVICE" ]]; then
         run_command "cp \"$LOCAL_CAVA_SERVICE\" \"$CAVA_SERVICE_FILE\""
         run_command "systemctl daemon-reload"
@@ -547,7 +547,7 @@ setup_cava_service() {
         # run_command "systemctl start cava.service"
         log_message "success" "CAVA service installed."
     else
-        log_message "error" "cava.service not found in /home/volumio/Quadify/service."
+        log_message "error" "cava.service not found in /home/volumio/CyFi/service."
     fi
     show_random_tip
 }
@@ -556,7 +556,7 @@ setup_cava_service() {
 #   Buttons + LEDs Handling
 # ============================
 configure_buttons_leds() {
-    MAIN_PY_PATH="/home/volumio/Quadify/src/main.py"
+    MAIN_PY_PATH="/home/volumio/CyFi/src/main.py"
     if [[ ! -f "$MAIN_PY_PATH" ]]; then
         log_message "error" "Could not find main.py at $MAIN_PY_PATH."
         exit 1
@@ -587,7 +587,7 @@ configure_buttons_leds() {
 # ============================
 install_lircrc() {
     log_progress "Installing LIRC configuration (lircrc) from repository..."
-    LOCAL_LIRCRC="/home/volumio/Quadify/lirc/lircrc"
+    LOCAL_LIRCRC="/home/volumio/CyFi/lirc/lircrc"
     DESTINATION="/etc/lirc/lircrc"
     if [ -f "$LOCAL_LIRCRC" ]; then
         run_command "cp \"$LOCAL_LIRCRC\" \"$DESTINATION\""
@@ -600,8 +600,8 @@ install_lircrc() {
 
 install_lirc_configs() {
     log_progress "Installing LIRC configuration files..."
-    LOCAL_LIRCRC="/home/volumio/Quadify/lirc/lircrc"
-    LOCAL_LIRCD_CONF="/home/volumio/Quadify/lirc/lircd.conf"
+    LOCAL_LIRCRC="/home/volumio/CyFi/lirc/lircrc"
+    LOCAL_LIRCD_CONF="/home/volumio/CyFi/lirc/lircd.conf"
     DEST_LIRCRC="/etc/lirc/lircrc"
     DEST_LIRCD_CONF="/etc/lirc/lircd.conf"
     if [ -f "$LOCAL_LIRCRC" ]; then
@@ -624,7 +624,7 @@ install_lirc_configs() {
 setup_ir_listener_service() {
     log_progress "Setting up IR Listener service..."
     IR_SERVICE_FILE="/etc/systemd/system/ir_listener.service"
-    LOCAL_IR_SERVICE="/home/volumio/Quadify/service/ir_listener.service"
+    LOCAL_IR_SERVICE="/home/volumio/CyFi/service/ir_listener.service"
     if [ -f "$LOCAL_IR_SERVICE" ]; then
         run_command "cp \"$LOCAL_IR_SERVICE\" \"$IR_SERVICE_FILE\""
         run_command "systemctl daemon-reload"
@@ -632,7 +632,7 @@ setup_ir_listener_service() {
         run_command "systemctl start ir_listener.service"
         log_message "success" "ir_listener.service installed and started."
     else
-        log_message "error" "ir_listener.service not found in /home/volumio/Quadify/service."
+        log_message "error" "ir_listener.service not found in /home/volumio/CyFi/service."
         exit 1
     fi
     show_random_tip
@@ -649,9 +649,9 @@ update_lirc_options() {
 #   Permissions
 # ============================
 set_permissions() {
-    log_progress "Setting ownership & permissions for /home/volumio/Quadify..."
-    run_command "chown -R volumio:volumio /home/volumio/Quadify"
-    run_command "chmod -R 755 /home/volumio/Quadify"
+    log_progress "Setting ownership & permissions for /home/volumio/CyFi..."
+    run_command "chown -R volumio:volumio /home/volumio/CyFi"
+    run_command "chmod -R 755 /home/volumio/CyFi"
     log_message "success" "Ownership/permissions set."
 }
 
@@ -660,24 +660,24 @@ set_permissions() {
 # ============================
 setup_run_update_wrapper() {
     log_progress "Compiling and installing run_update setuid wrapper..."
-    if [ -f "/home/volumio/Quadify/scripts/run_update.c" ]; then
-        run_command "gcc -o /home/volumio/Quadify/scripts/run_update /home/volumio/Quadify/scripts/run_update.c"
-        run_command "chown root:root /home/volumio/Quadify/scripts/run_update"
-        run_command "chmod 4755 /home/volumio/Quadify/scripts/run_update"
+    if [ -f "/home/volumio/CyFi/scripts/run_update.c" ]; then
+        run_command "gcc -o /home/volumio/CyFi/scripts/run_update /home/volumio/CyFi/scripts/run_update.c"
+        run_command "chown root:root /home/volumio/CyFi/scripts/run_update"
+        run_command "chmod 4755 /home/volumio/CyFi/scripts/run_update"
         log_message "success" "run_update setuid wrapper compiled and installed."
     else
-        log_message "warning" "run_update.c not found in /home/volumio/Quadify/scripts. Skipping setuid wrapper installation."
+        log_message "warning" "run_update.c not found in /home/volumio/CyFi/scripts. Skipping setuid wrapper installation."
     fi
     show_random_tip
 }
 
 # ============================
-#   Main Quadify Installation
+#   Main CyFi Installation
 # ============================
 main() {
     check_root
     banner
-    log_message "info" "Starting Quadify Installer..."
+    log_message "info" "Starting CyFi Installer..."
     
     # NEW: Gather all interactive answers at the very top
     get_user_preferences
@@ -702,7 +702,7 @@ main() {
         log_message "info" "Skipping I2C detect, as user chose not to enable Buttons/LEDs."
     fi
 
-    # 8) Setup main Quadify service
+    # 8) Setup main CyFi service
     setup_main_service
 
     # 9) Configure MPD
@@ -743,7 +743,7 @@ main() {
     # 19) Set up run_update setuid wrapper for automated updates
     setup_run_update_wrapper
 
-    log_message "success" "Quadify installation complete! A reboot is required."
+    log_message "success" "CyFi installation complete! A reboot is required."
 
     # 20) Ask user if they'd like to reboot now
     while true; do

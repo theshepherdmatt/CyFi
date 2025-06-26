@@ -4,11 +4,11 @@ from PIL import Image, ImageDraw, ImageFont
 
 class BouncingTextScreensaver:
     """
-    A screensaver that bounces the text "Quadify" around the screen
+    A screensaver that bounces the text "CyFi" around the screen
     with a small x, y velocity.
     """
 
-    def __init__(self, display_manager, text="Quadify", font_key="radio_title", update_interval=0.06):
+    def __init__(self, display_manager, text="CyFi", font_key="radio_title", update_interval=0.06):
         """
         :param display_manager:  DisplayManager instance
         :param text:             Which text to bounce

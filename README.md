@@ -1,10 +1,10 @@
-# Quadify-Beta Repository Overview
-This is the BETA branch of Quadify
-This repository contains the latest features, fixes, and experimental changes before they are merged into the stable Quadify release.
-Use this version if you want early access to new features, but understand it may be less stable than the mainline Quadify repository.
+# CyFi-Beta Repository Overview
+This is the BETA branch of CyFi
+This repository contains the latest features, fixes, and experimental changes before they are merged into the stable CyFi release.
+Use this version if you want early access to new features, but understand it may be less stable than the mainline CyFi repository.
 
 Overview
-Quadify-Beta is a comprehensive guide and toolkit for integrating Quadify audio hardware enhancements into Raspberry Pi audio systems. Initially developed by Audiophonics, this project has been extensively enhanced by the Quadify team, with all new updates debuting here before stable release.
+CyFi-Beta is a comprehensive guide and toolkit for integrating CyFi audio hardware enhancements into Raspberry Pi audio systems. Initially developed by Audiophonics, this project has been extensively enhanced by the CyFi team, with all new updates debuting here before stable release.
 
 This repository contains:
 
@@ -26,7 +26,7 @@ Rotary encoder installation
 Important Notes (Beta-Specific):
 Bleeding Edge:
 This version may include features, fixes, or improvements not yet fully tested.
-If you need maximum reliability, use the stable Quadify repository.
+If you need maximum reliability, use the stable CyFi repository.
 
 Intended for new setups but should work for most existing Volumio installs. In rare cases, you might need a system reset.
 
@@ -40,21 +40,21 @@ Quick Start
 Clone the Beta repo:
 
 ```bash
-git clone https://github.com/theshepherdmatt/Quadify-Beta.git
+git clone https://github.com/theshepherdmatt/CyFi-Beta.git
 ```
 * then
 ```
-mv Quadify-Beta Quadify 
+mv CyFi-Beta CyFi 
 ```
-(this changes the folder/paths to the original Quadify)
+(this changes the folder/paths to the original CyFi)
 
 * and
 ```
-cd Quadify
+cd CyFi
 sudo bash install.sh
 ```
 
-(If you prefer HTTPS, use https://github.com/theshepherdmatt/Quadify-Beta.git)
+(If you prefer HTTPS, use https://github.com/theshepherdmatt/CyFi-Beta.git)
 
 A reboot may be required after install; you’ll be prompted if so.
 
@@ -64,8 +64,8 @@ Installation time varies (OLED: ~5 min on Volumio, longer if compiling from sour
 Beta updates may occasionally change this process—watch the repo for new commit notes
 
 Stable Version
-For the latest stable and recommended Quadify release, please use:
-https://github.com/theshepherdmatt/Quadify
+For the latest stable and recommended CyFi release, please use:
+https://github.com/theshepherdmatt/CyFi
 
 * Post-installation, a system reboot might be necessary to apply the changes effectively. You’ll be informed via command line if such an action is required.
 

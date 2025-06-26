@@ -31,7 +31,7 @@ def display_shutdown_text(display_manager):
         
         try:
             # Adjust the font path and size as needed.
-            font = ImageFont.truetype("/home/volumio/Quadify/src/assets/fonts/OpenSans-Regular.ttf", 22)
+            font = ImageFont.truetype("/home/volumio/CyFi/src/assets/fonts/OpenSans-Regular.ttf", 22)
         except Exception as e:
             display_manager.logger.error(f"Error loading custom font: {e}")
             font = ImageFont.load_default()

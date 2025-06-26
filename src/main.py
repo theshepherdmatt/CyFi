@@ -45,7 +45,7 @@ def load_config(config_path='/config.yaml'):
         logging.warning(f"Config file {config_path} not found. Using default configuration.")
     return config
 
-FIRST_RUN_FLAG = '/data/quadify_first_run_done'
+FIRST_RUN_FLAG = '/data/cyfi_first_run_done'
 
 def has_seen_ready():
     return os.path.exists(FIRST_RUN_FLAG)
@@ -94,8 +94,8 @@ def show_gif_loop(gif_path, stop_condition, display_manager, logger):
             frame_duration = frame.info.get('duration', 100) / 1000.0
             time.sleep(frame_duration)
 
-def quadify_command_server(mode_manager, volumio_listener, display_manager, ready_stop_event):
-    sock_path = "/tmp/quadify.sock"
+def cyfi_command_server(mode_manager, volumio_listener, display_manager, ready_stop_event):
+    sock_path = "/tmp/cyfi.sock"
     try:
         os.remove(sock_path)
     except OSError:
@@ -104,7 +104,7 @@ def quadify_command_server(mode_manager, volumio_listener, display_manager, read
     server_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     server_socket.bind(sock_path)
     server_socket.listen(1)
-    print(f"Quadify command server listening on {sock_path}")
+    print(f"CyFi command server listening on {sock_path}")
 
     select_mapping = {
         "menu": lambda: mode_manager.menu_manager.select_item(),
@@ -172,6 +172,8 @@ def quadify_command_server(mode_manager, volumio_listener, display_manager, read
                 command = data.decode("utf-8").strip()
                 print(f"Command received: {command}")
                 current_mode = mode_manager.get_mode()
+                print(f"Current mode: {current_mode}")  # DEBUG: see the mode
+
                 # Exit ready GIF if any "menu/select/toggle/ok" arrives during boot
                 if not ready_stop_event.is_set() and command in ["menu", "select", "ok", "toggle"]:
                     print("Exiting ready GIF due to remote control command.")
@@ -191,26 +193,25 @@ def quadify_command_server(mode_manager, volumio_listener, display_manager, read
                     print("Repeat command received. (Implement as needed)")
                 elif command == "select":
                     if current_mode in select_mapping:
+                        print(f"Selecting item in mode: {current_mode}")  # DEBUG
                         select_mapping[current_mode]()
                     else:
                         print(f"No select mapping for mode: {current_mode}")
-                elif command in ["scroll_up", "scroll_down"]:
-                    if current_mode in scroll_mapping[command]:
-                        scroll_mapping[command][current_mode]()
-                    else:
-                        print(f"No scroll mapping for command: {command} in mode: {current_mode}")
-                elif command == "scroll_left":
-                    if current_mode in ["menu", "configmenu"]:
-                        active_menu = mode_manager.menu_manager if current_mode == "menu" else mode_manager.config_menu
-                        active_menu.scroll_selection(-1)
-                    else:
-                        print(f"No mapping for scroll_left in mode: {current_mode}")
-                elif command == "scroll_right":
-                    if current_mode in ["menu", "configmenu"]:
-                        active_menu = mode_manager.menu_manager if current_mode == "menu" else mode_manager.config_menu
-                        active_menu.scroll_selection(1)
-                    else:
-                        print(f"No mapping for scroll_right in mode: {current_mode}")
+
+                # **Replace the scroll command handlers with this debug and forced scroll:**
+
+                elif command == "scroll_up":
+                    print(f"Scroll up command received in mode: {current_mode}")  # DEBUG
+                    # Force scroll on menu_manager for testing regardless of mode:
+                    mode_manager.menu_manager.scroll_selection(-1)
+                    print("Called menu_manager.scroll_selection(-1)")
+
+                elif command == "scroll_down":
+                    print(f"Scroll down command received in mode: {current_mode}")  # DEBUG
+                    # Force scroll on menu_manager for testing regardless of mode:
+                    mode_manager.menu_manager.scroll_selection(1)
+                    print("Called menu_manager.scroll_selection(1)")
+
                 elif command == "seek_plus":
                     print("Seeking forward 10 seconds.")
                     subprocess.run(["volumio", "seek", "plus"], check=False)
@@ -241,7 +242,7 @@ def main():
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[logging.StreamHandler(sys.stdout)]
     )
-    logger = logging.getLogger("QuadifyMain")
+    logger = logging.getLogger("CyFiMain")
 
     # --- Config ---
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -284,7 +285,7 @@ def main():
 
     # --- Startup Logo ---
     logger.info("Displaying startup logo...")
-    display_manager.show_logo(duration=6)
+    display_manager.show_logo(duration=12)
     logger.info("Startup logo display complete.")
     display_manager.clear_screen()
     logger.info("Screen cleared after logo display.")
@@ -304,11 +305,11 @@ def main():
 
     dummy_mode_manager = DummyModeManager()
     threading.Thread(
-        target=quadify_command_server,
+        target=cyfi_command_server,
         args=(dummy_mode_manager, None, display_manager, ready_stop_event),
         daemon=True
     ).start()
-    print("Quadify command server thread started.")
+    print("CyFi command server thread started.")
 
     # --- VolumioListener ---
     volumio_cfg = config.get('volumio', {})
@@ -435,7 +436,7 @@ def main():
 
     # Restart the command server with real mode_manager (optional, but safe)
     threading.Thread(
-        target=quadify_command_server,
+        target=cyfi_command_server,
         args=(mode_manager, volumio_listener, display_manager, ready_stop_event),
         daemon=True
     ).start()
@@ -445,7 +446,7 @@ def main():
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        logger.info("Shutting down Quadify via KeyboardInterrupt.")
+        logger.info("Shutting down CyFi via KeyboardInterrupt.")
     finally:
         try:
             volumio_listener.stop_listener()
@@ -453,7 +454,7 @@ def main():
             pass
         clock.stop()
         display_manager.clear_screen()
-        logger.info("Quadify shut down gracefully.")
+        logger.info("CyFi shut down gracefully.")
 
 if __name__ == "__main__":
     main()

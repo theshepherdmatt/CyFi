@@ -62,7 +62,7 @@ class LibraryManager(BaseManager):
 
         # Extract display settings
         display_config = self.config.get('display', {})
-        self.icon_dir = display_config.get('icon_dir', '/home/volumio/Quadify/src/assets/images')
+        self.icon_dir = display_config.get('icon_dir', '/home/volumio/CyFi/src/assets/images')
 
         # Register mode change callback
         if hasattr(self.mode_manager, "add_on_mode_change_callback"):

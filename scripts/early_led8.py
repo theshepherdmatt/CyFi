@@ -1,4 +1,4 @@
-# /home/volumio/Quadify/scripts/early_led8.py
+# /home/volumio/CyFi/scripts/early_led8.py
 
 import smbus2
 

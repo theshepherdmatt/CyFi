@@ -5,7 +5,7 @@ from managers.menus.base_manager import BaseManager
 
 class ScreensaverMenu(BaseManager):
     """
-    A scrollable menu for choosing a screensaver (None, Snake, Geo, Quadify, Timer),
+    A scrollable menu for choosing a screensaver (None, Snake, Geo, CyFi, Timer),
     plus a sub-menu (Timer) to pick your idle timeout. The sub-menu has no 'Back' item;
     picking a time automatically returns to the main menu.
 
@@ -13,7 +13,7 @@ class ScreensaverMenu(BaseManager):
       1) None
       2) Snake
       3) Geo
-      4) Quadify
+      4) CyFi
       5) Timer
       6) Back  (goes to Config Menu)
 
@@ -55,7 +55,7 @@ class ScreensaverMenu(BaseManager):
             "None",
             "Snake",
             "Geo",
-            "Quadify",
+            "CyFi",
             "Timer",
             "Back"
         ]
@@ -170,13 +170,13 @@ class ScreensaverMenu(BaseManager):
             self._draw_current_menu()
             return
 
-        # Otherwise, it's "None", "Snake", "Stars", or "Quadify"
+        # Otherwise, it's "None", "Snake", "Stars", or "CyFi"
         # Save in config
         saver_map = {
             "None":    "none",
             "Snake":   "snake",
             "Geo":     "geo",
-            "Quadify": "quadify"
+            "CyFi": "cyfi"
         }
         chosen = saver_map.get(selected_name, "none")
         self.mode_manager.config["screensaver_type"] = chosen

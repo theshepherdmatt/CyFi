@@ -1,12 +1,12 @@
 [Unit]
-Description=IR Listener Service for Quadify
+Description=IR Listener Service for CyFi
 After=network.target
 
 [Service]
 Type=simple
 User=volumio
-WorkingDirectory=/home/volumio/Quadify/src/hardware
-ExecStart=/usr/bin/python3 /home/volumio/Quadify/src/hardware/ir_listener.py
+WorkingDirectory=/home/volumio/CyFi/src/hardware
+ExecStart=/usr/bin/python3 /home/volumio/CyFi/src/hardware/ir_listener.py
 Restart=always
 RestartSec=5
 

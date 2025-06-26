@@ -1,0 +1,15 @@
+[Unit]
+Description=Main CyFi Service
+After=network.target pigpiod.service
+
+[Service]
+Type=simple
+User=volumio
+WorkingDirectory=/home/volumio/CyFi
+ExecStart=/usr/bin/python3 /home/volumio/CyFi/src/main.py
+ExecStop=/usr/bin/python3 /home/volumio/CyFi/service/reset_oled_gpio.py
+Restart=on-failure
+Environment="PYTHONUNBUFFERED=1"
+
+[Install]
+WantedBy=multi-user.target

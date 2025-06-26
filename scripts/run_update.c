@@ -4,7 +4,7 @@
 
 int main(void) {
     // Execute the update script using bash
-    execl("/bin/bash", "bash", "/home/volumio/Quadify/quadify_autoupdate.sh", (char *)NULL);
+    execl("/bin/bash", "bash", "/home/volumio/CyFi/cyfi_autoupdate.sh", (char *)NULL);
     perror("execl failed");
     return 1;
 }

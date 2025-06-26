@@ -9,7 +9,7 @@ last_processed_time = {}
 DEBOUNCE_TIME = 0.3  # seconds, adjust as needed
 
 def send_command(command, retries=5, delay=0.5):
-    sock_path = "/tmp/quadify.sock"
+    sock_path = "/tmp/cyfi.sock"
     for attempt in range(retries):
         try:
             s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -103,11 +103,11 @@ def process_key(key, current_mode):
 
 def get_current_mode():
     """
-    Reads the current Quadify mode from a file.
-    Ensure your Quadify application writes the current mode to /tmp/quadify_mode.
+    Reads the current CyFi mode from a file.
+    Ensure your CyFi application writes the current mode to /tmp/cyfi_mode.
     """
     try:
-        with open("/tmp/quadify_mode", "r") as f:
+        with open("/tmp/cyfi_mode", "r") as f:
             return f.read().strip()
     except Exception:
         return "clock"  # Default mode if file not found

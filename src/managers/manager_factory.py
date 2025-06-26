@@ -5,7 +5,7 @@ import logging
 
 class ManagerFactory:
     """
-    Responsible for creating and configuring all screens/managers needed by Quadify (Volumio edition).
+    Responsible for creating and configuring all screens/managers needed by CyFi (Volumio edition).
     """
 
     def __init__(self, display_manager, volumio_listener, mode_manager, config):
@@ -30,7 +30,7 @@ class ManagerFactory:
         """
         # ----- Create each object -----
 
-        # Quadify "menu" managers
+        # CyFi "menu" managers
         menu_manager         = self.create_menu_manager()
         tidal_manager        = self.create_tidal_manager()
         qobuz_manager        = self.create_qobuz_manager()
@@ -42,7 +42,7 @@ class ManagerFactory:
         library_manager      = self.create_library_manager()
         usb_library_manager  = self.create_usb_library_manager()
 
-        # Quoode/Quadify common screens
+        # Quoode/CyFi common screens
         webradio_screen      = self.create_webradio_screen()
         modern_screen        = self.create_modern_screen()
         minimal_screen        = self.create_minimal_screen()
@@ -228,7 +228,7 @@ class ManagerFactory:
         )
 
     # ----------------------------------------------------------------
-    #  New create methods for Quoode/Quadify synergy
+    #  New create methods for Quoode/CyFi synergy
     # ----------------------------------------------------------------
 
     def create_clock_menu(self):
@@ -275,12 +275,12 @@ class ManagerFactory:
             )
 
 
-        elif screensaver_type in ("quadify", "bouncing_text"):
+        elif screensaver_type in ("cyfi", "bouncing_text"):
             from display.screensavers.bouncing_text_screensaver import BouncingTextScreensaver
             self.logger.info("ManagerFactory: Using BouncingTextScreensaver.")
             return BouncingTextScreensaver(
                 display_manager=self.display_manager,
-                text="Quadify",
+                text="CyFi",
                 update_interval=0.06
             )
         else:

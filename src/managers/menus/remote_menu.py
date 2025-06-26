@@ -11,7 +11,7 @@ class RemoteMenu(BaseManager):
     A scrollable menu for selecting and installing an IR remote configuration.
     
     Each remote configuration is stored in a folder under:
-      /home/volumio/Quadify/lirc/configurations/
+      /home/volumio/CyFi/lirc/configurations/
       
     For example, the "Apple Remote A1156" folder should contain:
       - lircd.conf
@@ -143,7 +143,7 @@ class RemoteMenu(BaseManager):
             self.mode_manager.to_configmenu()
         else:
             # Define the source directory.
-            source_dir = f"/home/volumio/Quadify/lirc/configurations/{selected_item}"
+            source_dir = f"/home/volumio/CyFi/lirc/configurations/{selected_item}"
             if os.path.isdir(source_dir):
                 try:
                     # First, display a message on the OLED screen
@@ -154,8 +154,8 @@ class RemoteMenu(BaseManager):
                     time.sleep(10)
                     
                     # Now call the privileged helper to install the configuration.
-                    # Replace '/home/volumio/Quadify/run_remote_config' with your helper's path.
-                    result = subprocess.call(["/home/volumio/Quadify/scripts/install_remote_config.sh", selected_item])
+                    # Replace '/home/volumio/CyFi/run_remote_config' with your helper's path.
+                    result = subprocess.call(["/home/volumio/CyFi/scripts/install_remote_config.sh", selected_item])
                     if result == 0:
                         self.logger.info(f"RemoteMenu: Installed configuration for '{selected_item}'.")
                         self.stop_mode()
