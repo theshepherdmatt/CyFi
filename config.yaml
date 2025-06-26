@@ -14,6 +14,7 @@ display:
   default_album_art: "/home/volumio/Quadify/src/assets/images/menus/albumart.jpg"
   loading_gif_path: "/home/volumio/Quadify/src/assets/images/gif/Loading.gif"
   ready_gif_path: "/home/volumio/Quadify/src/assets/images/gif/ready.gif"
+  ready_loop_path: "/home/volumio/Quadify/src/assets/images/gif/ready_loop.gif"
   ready_new_path: "/home/volumio/Quadify/src/assets/images/gif/ready_new.gif"
   connecting_path: "/home/volumio/Quadify/src/assets/images/gif/connecting.gif"
   connected_path: "/home/volumio/Quadify/src/assets/images/gif/connected.gif"
