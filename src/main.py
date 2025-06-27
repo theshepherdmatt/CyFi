@@ -316,7 +316,7 @@ def main():
         if state.get('status') in ['play', 'stop', 'pause', 'unknown']:
             logger.info("Volumio is considered ready now.")
             volumio_ready_event.set()
-
+            
     volumio_listener.state_changed.connect(on_state_changed)
 
     # --- Command server must start early so IR remote works for GIF loop exit ---
