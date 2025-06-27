@@ -316,10 +316,6 @@ def main():
         if state.get('status') in ['play', 'stop', 'pause', 'unknown']:
             logger.info("Volumio is considered ready now.")
             volumio_ready_event.set()
-            try:
-                volumio_listener.state_changed.disconnect(on_state_changed)
-            except Exception:
-                pass
 
     volumio_listener.state_changed.connect(on_state_changed)
 
