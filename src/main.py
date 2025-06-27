@@ -301,6 +301,24 @@ def main():
     ready_stop_event = threading.Event()
     MIN_LOADING_DURATION = 6  # seconds
 
+    # --- VolumioListener ---
+    volumio_cfg = config.get('volumio', {})
+    volumio_host = volumio_cfg.get('host', 'localhost')
+    volumio_port = volumio_cfg.get('port', 3000)
+    volumio_listener = VolumioListener(host=volumio_host, port=volumio_port)
+
+    # On Volumio state change: set events, also handle ready_stop_event if playing
+    def on_state_changed(sender, state):
+        logger.info(f"Volumio state changed: {state}")
+        if state.get('status') == 'play' and not ready_stop_event.is_set():
+            logger.info("Detected playback start! Exiting ready screen.")
+            ready_stop_event.set()
+        if state.get('status') in ['play', 'stop', 'pause', 'unknown']:
+            logger.info("Volumio is considered ready now.")
+            volumio_ready_event.set()
+
+    volumio_listener.state_changed.connect(on_state_changed)
+
     # --- Command server must start early so IR remote works for GIF loop exit ---
     class DummyModeManager:
         def get_mode(self):
@@ -311,16 +329,10 @@ def main():
     dummy_mode_manager = DummyModeManager()
     threading.Thread(
         target=cyfi_command_server,
-        args=(dummy_mode_manager, None, display_manager, ready_stop_event),
+        args=(dummy_mode_manager, volumio_listener, display_manager, ready_stop_event),
         daemon=True
     ).start()
     print("CyFi command server thread started.")
-
-    # --- VolumioListener ---
-    volumio_cfg = config.get('volumio', {})
-    volumio_host = volumio_cfg.get('host', 'localhost')
-    volumio_port = volumio_cfg.get('port', 3000)
-    volumio_listener = VolumioListener(host=volumio_host, port=volumio_port)
 
     # Loading GIF thread
     def show_loading():
@@ -355,22 +367,6 @@ def main():
         logger.info("Minimum loading duration has elapsed.")
 
     threading.Thread(target=set_min_loading_event, daemon=True).start()
-
-    # On Volumio state change: set events, also handle ready_stop_event if playing
-    def on_state_changed(sender, state):
-        logger.info(f"Volumio state changed: {state}")
-        if state.get('status') == 'play' and not ready_stop_event.is_set():
-            logger.info("Detected playback start! Exiting ready screen.")
-            ready_stop_event.set()
-        if state.get('status') in ['play', 'stop', 'pause', 'unknown']:
-            logger.info("Volumio is considered ready now.")
-            volumio_ready_event.set()
-            try:
-                volumio_listener.state_changed.disconnect(on_state_changed)
-            except Exception:
-                pass
-
-    volumio_listener.state_changed.connect(on_state_changed)
 
     # --- Wait for both loading events then run Ready GIF ---
     logger.info("Waiting for Volumio readiness & min load time.")
@@ -463,3 +459,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
