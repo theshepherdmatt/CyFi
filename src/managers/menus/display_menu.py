@@ -168,9 +168,9 @@ class DisplayMenu(BaseManager):
                 self._display_current_menu()
 
             elif selected_item == "Back":
-                # Return to config menu
+                # Return to previous menu
                 self.stop_mode()
-                self.mode_manager.to_configmenu()
+                self.mode_manager.back()
             else:
                 self.logger.warning(f"DisplayMenu: Unknown main item => {selected_item}")
 

@@ -140,7 +140,7 @@ class RemoteMenu(BaseManager):
         if selected_item == "Back":
             # Return to the previous (config) menu.
             self.stop_mode()
-            self.mode_manager.to_configmenu()
+            self.mode_manager.back()
         else:
             # Define the source directory.
             source_dir = f"/home/volumio/CyFi/lirc/configurations/{selected_item}"

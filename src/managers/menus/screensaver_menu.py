@@ -158,7 +158,7 @@ class ScreensaverMenu(BaseManager):
         if selected_name == "Back":
             # Return to config
             self.stop_mode()
-            self.mode_manager.to_configmenu()
+            self.mode_manager.back()
             return
 
         elif selected_name == "Timer":

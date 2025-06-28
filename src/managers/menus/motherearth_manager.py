@@ -357,3 +357,8 @@ class MotherEarthManager(BaseManager):
         except Exception as e:
             self.logger.exception(f"MotherEarthManager: Failed to play station - {e}")
             self.display_error_message("Playback Error", f"Could not play station: {e}")
+
+    def back(self):
+        """Exit this manager and return to the previous mode."""
+        self.stop_mode()
+        super().back()

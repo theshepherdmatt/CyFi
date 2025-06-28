@@ -144,6 +144,7 @@ class USBLibraryManager(BaseManager):
             }
             for item in combined_items
         ]
+        self.current_menu_items.append({"title": "Back", "action": "back"})
 
         self.logger.info(f"USBLibraryManager: Updated menu with {len(self.current_menu_items)} items.")
         if self.is_active:
@@ -201,6 +202,10 @@ class USBLibraryManager(BaseManager):
 
         selected_item = self.current_menu_items[self.current_selection_index]
         self.logger.info(f"USBLibraryManager: Selected menu item: {selected_item}")
+
+        if selected_item.get("action") == "back":
+            self.back()
+            return
 
         name = selected_item.get("title")
         uri = selected_item.get("uri")
@@ -266,3 +271,8 @@ class USBLibraryManager(BaseManager):
             )
 
         self.display_manager.draw_custom(draw)
+
+    def back(self):
+        """Return to previous menu via ModeManager."""
+        self.stop_mode()
+        super().back()

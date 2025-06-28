@@ -172,7 +172,7 @@ class ClockMenu(BaseManager):
                 # Return to Display Menu
                 self.logger.info("ClockMenu: 'Back' => to Display Menu")
                 self.stop_mode()
-                self.mode_manager.to_displaymenu()
+                self.mode_manager.back()
 
             else:
                 self.logger.warning(f"ClockMenu: Unknown main item => {selected}")

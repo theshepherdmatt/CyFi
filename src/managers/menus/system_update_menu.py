@@ -143,7 +143,7 @@ class SystemUpdateMenu(BaseManager):
             elif selected_item == "Back":
                 # Return to whichever menu invoked us (maybe config menu)
                 self.stop_mode()
-                self.mode_manager.to_configmenu()
+                self.mode_manager.back()
 
             else:
                 self.logger.warning(f"SystemUpdateMenu: Unknown main item => {selected_item}")

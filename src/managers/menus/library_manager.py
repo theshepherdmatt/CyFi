@@ -188,6 +188,8 @@ class LibraryManager(BaseManager):
                 }
                 for item in items
             ]
+            # Append a Back option for consistent navigation
+            self.current_menu_items.append({"title": "Back", "action": "back"})
 
             self.logger.info(f"LibraryManager: Fetched {len(self.current_menu_items)} items for URI: {uri}")
             if self.is_active:
@@ -565,6 +567,14 @@ class LibraryManager(BaseManager):
         else:
             self.logger.info("LibraryManager: Already at root level, cannot go back.")
             self.stop_mode()  # Optionally exit the mode if at root
+
+    def back(self):
+        """Public back interface used by ModeManager or UI."""
+        if self.menu_stack:
+            self.go_back()
+        else:
+            self.stop_mode()
+            super().back()
             
 
     def update_song_info(self, state):
