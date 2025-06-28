@@ -3,10 +3,10 @@ import time
 import os
 import subprocess
 from PIL import ImageFont
-from managers.menus.base_manager import BaseManager
+from managers.menus.base_manager import BaseMenu
 import sys
 
-class RemoteMenu(BaseManager):
+class RemoteMenu(BaseMenu):
     """
     A scrollable menu for selecting and installing an IR remote configuration.
     
@@ -66,8 +66,8 @@ class RemoteMenu(BaseManager):
             "Yamaha RAV363"
         ]
         
-        # Append a "Back" option to allow the user to exit.
-        self.current_list = self.remote_options + ["Back"]
+        # Append a "Back" option automatically
+        self.current_list = self.ensure_back_item(self.remote_options)
         self.current_selection_index = 0
 
     # ----------------------------------------------------------------
@@ -137,10 +137,8 @@ class RemoteMenu(BaseManager):
         selected_item = self.current_list[self.current_selection_index]
         self.logger.info(f"RemoteMenu: Selected => {selected_item}")
 
-        if selected_item == "Back":
-            # Return to the previous (config) menu.
-            self.stop_mode()
-            self.mode_manager.back()
+        if self.handle_menu_select(self.current_selection_index, self.current_list):
+            return
         else:
             # Define the source directory.
             source_dir = f"/home/volumio/CyFi/lirc/configurations/{selected_item}"

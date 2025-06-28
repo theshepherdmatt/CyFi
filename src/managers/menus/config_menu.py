@@ -2,9 +2,9 @@ import logging
 import time
 import threading
 from PIL import Image, ImageDraw, ImageFont
-from managers.menus.base_manager import BaseManager
+from managers.menus.base_manager import BaseMenu
 
-class ConfigMenu(BaseManager):
+class ConfigMenu(BaseMenu):
     """
     A configuration menu displayed as a horizontal icon row.
     It matches the style of the MenuManager's icon row menu.
@@ -25,14 +25,13 @@ class ConfigMenu(BaseManager):
         self.bold_font_key = 'menu_font_bold'
 
         # Define config menu items
-        self.menu_items = [
+        self.menu_items = self.ensure_back_item([
             "Display",
             "Clock",
             "Screen+",
             "System",
             "Update",
-            "Back"
-        ]
+        ])
 
         # Map each menu item to an icon.
         # The keys for display_manager.icons should match your asset names.
@@ -159,6 +158,10 @@ class ConfigMenu(BaseManager):
 
         selected = self.menu_items[self.current_index]
         self.logger.info(f"ConfigMenu: Selected {selected}.")
+
+        if self.handle_menu_select(self.current_index, self.menu_items):
+            return
+
         self.stop_mode()
 
         # Trigger the corresponding mode change
@@ -174,7 +177,5 @@ class ConfigMenu(BaseManager):
             self.mode_manager.to_systemupdate()
         elif selected == "IRremote":
             self.mode_manager.to_remotemenu()
-        elif selected == "Back":
-            self.mode_manager.back()
         else:
             self.logger.warning(f"ConfigMenu: Unrecognised selection: {selected}")

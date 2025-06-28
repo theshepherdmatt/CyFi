@@ -1,9 +1,9 @@
 import logging
 import time
 from PIL import ImageFont
-from managers.menus.base_manager import BaseManager
+from managers.menus.base_manager import BaseMenu
 
-class ClockMenu(BaseManager):
+class ClockMenu(BaseMenu):
     """
     A scrollable 'Clock' settings menu:
 
@@ -47,20 +47,18 @@ class ClockMenu(BaseManager):
         self.font = display_manager.fonts.get(self.font_key, ImageFont.load_default())
 
         # Main menu
-        self.main_items = [
+        self.main_items = self.ensure_back_item([
             "Show Seconds",
             "Show Date",
             "Select Font",
-            "Back"  # => return to Display Menu
-        ]
+        ])
 
         # Sub-menus
-        # No 'Back' for Show Seconds or Show Date => On/Off only
-        self.seconds_items = ["On", "Off"]
-        self.date_items = ["On", "Off"]
+        self.seconds_items = self.ensure_back_item(["On", "Off"])
+        self.date_items = self.ensure_back_item(["On", "Off"])
 
         # Font sub-menu does include 'Back'
-        self.font_items = ["Sans", "Dots", "Digital", "Bold", "Back"]
+        self.font_items = self.ensure_back_item(["Sans", "Dots", "Digital", "Bold"])
 
         # Current data
         self.current_items = self.main_items
@@ -143,6 +141,9 @@ class ClockMenu(BaseManager):
         selected = self.current_items[self.current_selection_index]
         self.logger.info(f"ClockMenu: Selected => {selected} (menu={self.current_menu})")
 
+        if self.handle_menu_select(self.current_selection_index, self.current_items):
+            return
+
         # MAIN menu
         if self.current_menu == "main":
             if selected == "Show Seconds":
@@ -167,12 +168,6 @@ class ClockMenu(BaseManager):
                 self.current_selection_index = 0
                 self.window_start_index = 0
                 self._draw_current_menu()
-
-            elif selected == "Back":
-                # Return to Display Menu
-                self.logger.info("ClockMenu: 'Back' => to Display Menu")
-                self.stop_mode()
-                self.mode_manager.back()
 
             else:
                 self.logger.warning(f"ClockMenu: Unknown main item => {selected}")
@@ -210,7 +205,7 @@ class ClockMenu(BaseManager):
 
         # SUB-MENU: Fonts => ["Sans", "Dots", "Digital", "Bold", "Back"]
         elif self.current_menu == "fonts":
-            if selected == "Back":
+            if selected == self.back_label:
                 self._return_to_main()
             else:
                 self._handle_font_selection(selected)

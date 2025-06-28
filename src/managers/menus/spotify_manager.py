@@ -1,10 +1,10 @@
 # src/managers/spotify_manager.py
-from managers.base_manager import BaseManager
+from managers.menus.base_manager import BaseMenu
 import logging
 from PIL import ImageFont
 import threading
 
-class SpotifyManager(BaseManager):
+class SpotifyManager(BaseMenu):
     def __init__(self, display_manager, volumio_listener, mode_manager, window_size=4, y_offset=5, line_spacing=15):
         super().__init__(display_manager, volumio_listener, mode_manager)
         self.mode_name = "spotify"
@@ -206,8 +206,7 @@ class SpotifyManager(BaseManager):
             }
             for item in combined_items
         ]
-        # Add Back option
-        self.current_menu_items.append({"title": "Back", "action": "back"})
+        self.current_menu_items = self.ensure_back_item(self.current_menu_items)
 
         self.logger.info(f"SpotifyManager: Updated menu with {len(self.current_menu_items)} items.")
 
@@ -268,8 +267,7 @@ class SpotifyManager(BaseManager):
         selected_item = self.current_menu_items[self.current_selection_index]
         self.logger.info(f"SpotifyManager: Selected item: {selected_item}")
 
-        if selected_item.get("action") == "back":
-            self.back()
+        if self.handle_menu_select(self.current_selection_index, self.current_menu_items):
             return
 
         uri = selected_item.get("uri")

@@ -1,9 +1,9 @@
 import logging
 import time
 from PIL import ImageFont
-from managers.menus.base_manager import BaseManager
+from managers.menus.base_manager import BaseMenu
 
-class ScreensaverMenu(BaseManager):
+class ScreensaverMenu(BaseMenu):
     """
     A scrollable menu for choosing a screensaver (None, Snake, Geo, CyFi, Timer),
     plus a sub-menu (Timer) to pick your idle timeout. The sub-menu has no 'Back' item;
@@ -50,15 +50,14 @@ class ScreensaverMenu(BaseManager):
         self.font_key = "menu_font"
         self.font = display_manager.fonts.get(self.font_key) or ImageFont.load_default()
 
-        # Main menu items (added "Back" for returning to config)
-        self.main_items = [
+        # Main menu items
+        self.main_items = self.ensure_back_item([
             "None",
             "Snake",
             "Geo",
             "CyFi",
             "Timer",
-            "Back"
-        ]
+        ])
 
         # Timer sub-menu items (no "Back" line)
         self.timer_items = [
@@ -67,6 +66,7 @@ class ScreensaverMenu(BaseManager):
             ("5 min",   300),
             ("10 min",  600),
             ("1 hour",  3600),
+            (self.back_label, None)
         ]
 
         # Track which menu is active: "main" or "timer"
@@ -155,10 +155,7 @@ class ScreensaverMenu(BaseManager):
         selected_name = self.current_items[self.current_index]
         self.logger.info(f"ScreensaverMenu: Selected => {selected_name} (main menu)")
 
-        if selected_name == "Back":
-            # Return to config
-            self.stop_mode()
-            self.mode_manager.back()
+        if self.handle_menu_select(self.current_index, self.current_items):
             return
 
         elif selected_name == "Timer":
@@ -188,15 +185,17 @@ class ScreensaverMenu(BaseManager):
         self._return_to_main()
 
     def _handle_timer_selection(self):
-        """User selected an item from the Timer sub-menu (no 'Back' line)."""
+        """User selected an item from the Timer sub-menu."""
         label, seconds = self.timer_items[self.current_index]
         self.logger.info(f"ScreensaverMenu: Timer => {label} ({seconds} seconds)")
 
-        # Save in config
+        if label == self.back_label:
+            self._return_to_main()
+            return
+
         self.mode_manager.config["screensaver_timeout"] = seconds
         self.mode_manager.save_preferences()
 
-        # Now go back to the main menu automatically
         self._return_to_main()
 
     def _return_to_main(self):

@@ -1,13 +1,13 @@
 # src/managers/radio_manager.py
 
-from managers.base_manager import BaseManager
+from managers.menus.base_manager import BaseMenu
 import logging
 from PIL import ImageFont
 import threading
 import time
 
 
-class RadioManager(BaseManager):
+class RadioManager(BaseMenu):
     def __init__(self, display_manager, volumio_listener, mode_manager, window_size=4, y_offset=2, line_spacing=15):
         super().__init__(display_manager, volumio_listener, mode_manager)
 
@@ -205,7 +205,7 @@ class RadioManager(BaseManager):
                 item.get("title", item.get("name", "Untitled"))
                 for item in items
             ]
-            self.categories.append("Back")
+            self.categories = self.ensure_back_item(self.categories)
             self.logger.info(f"RadioManager: Updated categories list with {len(self.categories)} items.")
             self.current_selection_index = 0
             self.window_start_index = 0
@@ -243,7 +243,7 @@ class RadioManager(BaseManager):
                 }
                 for item in items
             ]
-            self.stations.append({"title": "Back", "action": "back"})
+            self.stations = self.ensure_back_item(self.stations)
             self.logger.info(f"RadioManager: Updated stations list with {len(self.stations)} items.")
             self.current_selection_index = 0
             self.window_start_index = 0
@@ -351,8 +351,7 @@ class RadioManager(BaseManager):
 
         if self.current_menu == "categories":
             selected_category = self.categories[self.current_selection_index]
-            if selected_category == "Back":
-                self.back()
+            if self.handle_menu_select(self.current_selection_index, self.categories):
                 return
             self.logger.info(f"RadioManager: Selected radio category: {selected_category}")
 
@@ -377,8 +376,7 @@ class RadioManager(BaseManager):
                 return
 
             selected_station = self.stations[self.current_selection_index]
-            if selected_station.get("title") == "Back":
-                self.back()
+            if self.handle_menu_select(self.current_selection_index, self.stations):
                 return
             station_title = selected_station['title'].strip()
             uri = selected_station['uri']
