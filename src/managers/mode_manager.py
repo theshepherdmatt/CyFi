@@ -935,7 +935,8 @@ class ModeManager:
                 self.logger.warning("No back mapping for '%s'. Defaulting to clock.", previous_mode)
                 self.to_clock()
         else:
-            self.logger.info("Navigation stack empty, cannot go back.")
+            self.logger.info("Navigation stack empty, returning to main menu.")
+            self.to_menu()
 
     def get_mode(self):
         return self.state

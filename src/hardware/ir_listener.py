@@ -97,7 +97,7 @@ def process_key(key, current_mode):
 
 
     
-    elif key == "KEY_BACK":
+    elif key in ["KEY_BACK", "KEY_EXIT", "KEY_RETURN"]:
         send_command("back")
 
     elif key == "KEY_POWER":
