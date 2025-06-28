@@ -2,9 +2,9 @@ import logging
 import time
 import subprocess
 from PIL import ImageFont
-from managers.menus.base_manager import BaseManager
+from managers.menus.base_manager import BaseMenu
 
-class SystemUpdateMenu(BaseManager):
+class SystemUpdateMenu(BaseMenu):
     """
     A scrollable menu for handling "System Update" interactions:
       - Main menu:
@@ -44,13 +44,12 @@ class SystemUpdateMenu(BaseManager):
         self.font = display_manager.fonts.get(self.font_key, ImageFont.load_default())
 
         # MAIN menu items
-        self.main_items = [
+        self.main_items = self.ensure_back_item([
             "Update from GitHub",
-            "Back"
-        ]
+        ])
 
         # CONFIRM sub-menu
-        self.confirm_items = ["Yes", "No"]
+        self.confirm_items = self.ensure_back_item(["Yes", "No"])
 
         # We'll store whichever list is active in `self.current_list`
         self.current_list = self.main_items
@@ -131,6 +130,9 @@ class SystemUpdateMenu(BaseManager):
             f"SystemUpdateMenu: Selected => {selected_item} in menu '{self.current_menu}'"
         )
 
+        if self.handle_menu_select(self.current_selection_index, self.current_list):
+            return
+
         if self.current_menu == "main":
             if selected_item == "Update from GitHub":
                 # Jump to confirm sub-menu
@@ -139,11 +141,6 @@ class SystemUpdateMenu(BaseManager):
                 self.current_selection_index = 0
                 self.window_start_index = 0
                 self._display_current_menu()
-
-            elif selected_item == "Back":
-                # Return to whichever menu invoked us (maybe config menu)
-                self.stop_mode()
-                self.mode_manager.back()
 
             else:
                 self.logger.warning(f"SystemUpdateMenu: Unknown main item => {selected_item}")

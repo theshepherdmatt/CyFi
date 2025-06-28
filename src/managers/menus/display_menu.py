@@ -1,9 +1,9 @@
 import logging
 import time
 from PIL import ImageFont
-from managers.menus.base_manager import BaseManager
+from managers.menus.base_manager import BaseMenu
 
-class DisplayMenu(BaseManager):
+class DisplayMenu(BaseMenu):
     """
     A scrollable menu using 'anchored scrolling' (like RadioManager).
 
@@ -52,17 +52,16 @@ class DisplayMenu(BaseManager):
         self.font = display_manager.fonts.get(self.font_key, ImageFont.load_default())
 
         # MAIN menu items
-        self.main_items = [
+        self.main_items = self.ensure_back_item([
             "Display Modes",
             "Spectrum",
             "Brightness",
-            "Back"
-        ]
+        ])
 
         # SUB-menu items (no 'Back' lines here)
-        self.display_modes_items = ["Modern", "Original", "Minimal"]
-        self.spectrum_items      = ["Off", "On"]
-        self.brightness_items    = ["Low", "Medium", "High"]
+        self.display_modes_items = self.ensure_back_item(["Modern", "Original", "Minimal"])
+        self.spectrum_items      = self.ensure_back_item(["Off", "On"])
+        self.brightness_items    = self.ensure_back_item(["Low", "Medium", "High"])
 
         # We'll store whichever list is active in `self.current_list`
         self.current_list = self.main_items
@@ -144,6 +143,9 @@ class DisplayMenu(BaseManager):
             f"DisplayMenu: Selected => {selected_item} in menu '{self.current_menu}'"
         )
 
+        if self.handle_menu_select(self.current_selection_index, self.current_list):
+            return
+
         # MAIN menu logic
         if self.current_menu == "main":
             if selected_item == "Display Modes":
@@ -167,47 +169,56 @@ class DisplayMenu(BaseManager):
                 self.window_start_index = 0
                 self._display_current_menu()
 
-            elif selected_item == "Back":
-                # Return to previous menu
-                self.stop_mode()
-                self.mode_manager.back()
             else:
                 self.logger.warning(f"DisplayMenu: Unknown main item => {selected_item}")
 
         # DISPLAY MODES sub-menu
         elif self.current_menu == "display_modes":
-            # No "Back" item here, so any selection just applies and returns to main
-            self._handle_display_mode(selected_item)
-
-            # After applying, go back to main
-            self.current_menu = "main"
-            self.current_list = self.main_items
-            self.current_selection_index = 0
-            self.window_start_index = 0
-            self._display_current_menu()
+            if selected_item == self.back_label:
+                self.current_menu = "main"
+                self.current_list = self.main_items
+                self.current_selection_index = 0
+                self.window_start_index = 0
+                self._display_current_menu()
+            else:
+                self._handle_display_mode(selected_item)
+                self.current_menu = "main"
+                self.current_list = self.main_items
+                self.current_selection_index = 0
+                self.window_start_index = 0
+                self._display_current_menu()
 
         # SPECTRUM sub-menu
         elif self.current_menu == "spectrum":
-            # No "Back" item here either
-            self._handle_spectrum(selected_item)
-
-            # Return to main
-            self.current_menu = "main"
-            self.current_list = self.main_items
-            self.current_selection_index = 0
-            self.window_start_index = 0
-            self._display_current_menu()
+            if selected_item == self.back_label:
+                self.current_menu = "main"
+                self.current_list = self.main_items
+                self.current_selection_index = 0
+                self.window_start_index = 0
+                self._display_current_menu()
+            else:
+                self._handle_spectrum(selected_item)
+                self.current_menu = "main"
+                self.current_list = self.main_items
+                self.current_selection_index = 0
+                self.window_start_index = 0
+                self._display_current_menu()
 
         # BRIGHTNESS sub-menu
         elif self.current_menu == "brightness":
-            # No "Back" item here
-            self._handle_brightness(selected_item)
-
-            self.current_menu = "main"
-            self.current_list = self.main_items
-            self.current_selection_index = 0
-            self.window_start_index = 0
-            self._display_current_menu()
+            if selected_item == self.back_label:
+                self.current_menu = "main"
+                self.current_list = self.main_items
+                self.current_selection_index = 0
+                self.window_start_index = 0
+                self._display_current_menu()
+            else:
+                self._handle_brightness(selected_item)
+                self.current_menu = "main"
+                self.current_list = self.main_items
+                self.current_selection_index = 0
+                self.window_start_index = 0
+                self._display_current_menu()
 
         else:
             self.logger.warning(f"DisplayMenu: Unrecognized sub-menu => {self.current_menu}")

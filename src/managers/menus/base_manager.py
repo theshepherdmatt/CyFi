@@ -63,3 +63,62 @@ class BaseManager(ABC):
         self.logger.debug("BaseManager: Delegating back action to ModeManager.")
         if self.mode_manager:
             self.mode_manager.back()
+
+
+class BaseMenu(BaseManager):
+    """Base class for menu screens with automatic 'Back' handling.
+
+    Input handlers for IR remotes or rotary encoders should call the child
+    menu's ``scroll_selection()`` and ``select_item()`` methods. Those methods
+    can delegate to :meth:`handle_menu_select` to trigger ``mode_manager.back``
+    when the "Back" entry is chosen.
+    """
+
+    back_label = "Back"
+
+    # Example usage:
+    # class InputMenu(BaseMenu):
+    #     def __init__(self, mode_manager):
+    #         items = ["CD", "Tuner", "Aux"]
+    #         super().__init__(None, None, mode_manager)
+    #         self.menu_items = self.ensure_back_item(items)
+    #
+    #     def select_item(self):
+    #         if self.handle_menu_select(self.current_selection_index, self.menu_items):
+    #             return
+    #         # handle other selections here
+
+    def ensure_back_item(self, items):
+        """Append a Back entry to the list of items if not already present."""
+        if not items:
+            return [self.back_label]
+
+        last = items[-1]
+        if isinstance(last, dict):
+            if last.get("action") != "back":
+                items.append({"title": self.back_label, "action": "back"})
+        elif last != self.back_label:
+            items.append(self.back_label)
+        return items
+
+    def handle_menu_select(self, index, items=None):
+        """Return True if the index corresponds to the Back entry."""
+        item_list = items if items is not None else getattr(self, "current_menu_items", [])
+
+        if not item_list or index >= len(item_list):
+            return False
+
+        selected = item_list[index]
+
+        is_back = False
+        if isinstance(selected, dict):
+            is_back = selected.get("action") == "back"
+        else:
+            is_back = selected == self.back_label
+
+        if is_back:
+            self.stop_mode()
+            super().back()
+            return True
+
+        return False

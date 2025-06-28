@@ -1,11 +1,11 @@
 # usb_library_manager.py
 
-from managers.base_manager import BaseManager
+from managers.menus.base_manager import BaseMenu
 import logging
 from PIL import ImageFont
 import threading
 
-class USBLibraryManager(BaseManager):
+class USBLibraryManager(BaseMenu):
     def __init__(self, display_manager, volumio_listener, mode_manager, window_size=4, y_offset=5, line_spacing=15):
         super().__init__(display_manager, volumio_listener, mode_manager)
         self.mode_name = "usblibrary"
@@ -144,7 +144,7 @@ class USBLibraryManager(BaseManager):
             }
             for item in combined_items
         ]
-        self.current_menu_items.append({"title": "Back", "action": "back"})
+        self.current_menu_items = self.ensure_back_item(self.current_menu_items)
 
         self.logger.info(f"USBLibraryManager: Updated menu with {len(self.current_menu_items)} items.")
         if self.is_active:
@@ -203,8 +203,7 @@ class USBLibraryManager(BaseManager):
         selected_item = self.current_menu_items[self.current_selection_index]
         self.logger.info(f"USBLibraryManager: Selected menu item: {selected_item}")
 
-        if selected_item.get("action") == "back":
-            self.back()
+        if self.handle_menu_select(self.current_selection_index, self.current_menu_items):
             return
 
         name = selected_item.get("title")

@@ -10,9 +10,9 @@ from requests.adapters import HTTPAdapter
 from urllib.parse import quote
 from urllib3.util.retry import Retry
 from PIL import Image, ImageDraw, ImageFont
-from managers.base_manager import BaseManager  # Adjust import based on your project structure
+from managers.menus.base_manager import BaseMenu
 
-class LibraryManager(BaseManager):
+class LibraryManager(BaseMenu):
     def __init__(self, display_manager, volumio_config, mode_manager, window_size=3, y_offset=0, line_spacing=16):
         super().__init__(display_manager, volumio_config, mode_manager)
 
@@ -189,7 +189,7 @@ class LibraryManager(BaseManager):
                 for item in items
             ]
             # Append a Back option for consistent navigation
-            self.current_menu_items.append({"title": "Back", "action": "back"})
+            self.current_menu_items = self.ensure_back_item(self.current_menu_items)
 
             self.logger.info(f"LibraryManager: Fetched {len(self.current_menu_items)} items for URI: {uri}")
             if self.is_active:
@@ -210,6 +210,9 @@ class LibraryManager(BaseManager):
 
         selected_item = self.current_menu_items[self.current_selection_index]
         self.logger.info(f"LibraryManager: Selected item: {selected_item}")
+
+        if self.handle_menu_select(self.current_selection_index, self.current_menu_items):
+            return
 
         if 'action' in selected_item:
             # Handle submenu actions
@@ -281,11 +284,10 @@ class LibraryManager(BaseManager):
         self.logger.info(f"LibraryManager: Displaying options for album: {folder_item.get('title')}")
 
         # Define the submenu with icons
-        options = [
+        options = self.ensure_back_item([
             {"title": "Play Album", "action": "play_album", "data": folder_item, "icon": "play"},
             {"title": "Select Songs", "action": "select_songs", "data": folder_item, "icon": "songs"},
-            {"title": "Back", "action": "back", "icon": "back"}
-        ]
+        ])
 
         # Push the options menu onto the stack
         self.push_menu(options, menu_title=f"Album: {folder_item.get('title')}")
